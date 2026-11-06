@@ -21,7 +21,7 @@ DEFAULT_FILE = "products.json"
 
 EXIT_OK = 0
 EXIT_DATA_ERROR = 1
-EXIT_USAGE_ERROR = 2
+# Exit code 2 (invalid usage or input) is produced by argparse itself.
 
 # [0-9] instead of \d so non-ASCII digits (e.g. Arabic-Indic) are rejected.
 PRICE_INPUT_RE = re.compile(r"[0-9]+(\.[0-9]{1,2})?")
@@ -32,6 +32,9 @@ PRODUCT_KEYS = {"id", "name", "price", "quantity"}
 STORE_KEYS = {"next_id", "products"}
 
 
+# One exception type for expected failures (missing ID, bad data file, file I/O errors).
+# It carries exit code 1. main() catches it and prints one clean line to stderr,
+# so no Python traceback appears. Exit code 2 comes from argparse instead.
 class CLIError(Exception):
     """An expected failure: reported on stderr with an exit code, no traceback."""
 
