@@ -19,10 +19,12 @@ import tempfile
 
 DEFAULT_FILE = "products.json"
 
+# Named constants — nicknames for the numbers the program reports when it finishes
 EXIT_OK = 0
 EXIT_DATA_ERROR = 1
-# Exit code 2 (invalid usage or input) is produced by argparse itself.
+# Exit code 2 (invalid usage or input) will be produced by Python's argparse itself.
 
+# rules of number formatting for input and stored values
 # [0-9] instead of \d so non-ASCII digits (e.g. Arabic-Indic) are rejected.
 PRICE_INPUT_RE = re.compile(r"[0-9]+(\.[0-9]{1,2})?")
 STORED_PRICE_RE = re.compile(r"(0|[1-9][0-9]*)\.[0-9]{2}")
@@ -34,6 +36,8 @@ STORE_KEYS = {"next_id", "products"}
 
 # One exception type for expected failures (missing ID, bad data file, file I/O errors).
 # It carries exit code 1. main() catches it and prints one clean line to stderr,
+
+
 # so no Python traceback appears. Exit code 2 comes from argparse instead.
 class CLIError(Exception):
     """An expected failure: reported on stderr with an exit code, no traceback."""
@@ -97,17 +101,20 @@ def parse_path(text):
 
 # ---------------------------------------------------------------------------
 # Storage
+# Saves the inventory to a file and loads it back
 # ---------------------------------------------------------------------------
 
 def empty_store():
     return {"next_id": 1, "products": []}
 
 
+# is_int() is a helper function that checks if a value is an integer but not a boolean.
 def is_int(value):
     # bool is a subclass of int in Python; JSON true/false must not count.
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+# makes sure the file isn't broken before using it.
 def validate_store(data):
     """Return an error message if data is not a valid store, else None."""
     if not isinstance(data, dict):
@@ -148,6 +155,7 @@ def validate_store(data):
     return None
 
 
+# read the file each time a command runs.
 def load_store(path):
     """Read the store. A missing file is an empty store; anything else bad is an error."""
     try:
@@ -177,6 +185,7 @@ def load_store(path):
     return data
 
 
+# Write changes back safely, so that if the program crashes or the disk fills up, the original file is not corrupted.
 def save_store(path, store):
     """Write the store atomically: write a temp file, then replace the original.
 
@@ -206,6 +215,7 @@ def save_store(path, store):
                 pass
 
 
+# find one product by its ID. If not found, raise a CLIError with exit code 1.
 def find_product(store, product_id):
     for index, product in enumerate(store["products"]):
         if product["id"] == product_id:
@@ -213,12 +223,14 @@ def find_product(store, product_id):
     raise CLIError(f"product with ID {product_id} not found", EXIT_DATA_ERROR)
 
 
+# puts all products in ID order, so that the output is predictable and easy to read.
 def sorted_by_id(products):
     return sorted(products, key=lambda product: product["id"])
 
 
 # ---------------------------------------------------------------------------
 # Commands: each returns the JSON-serialisable result to print on success
+# each receives the already-checked input (args) and returns the result.
 # ---------------------------------------------------------------------------
 
 def cmd_add(args):
@@ -269,6 +281,9 @@ def cmd_delete(args):
     return {"deleted_id": args.id}
 
 
+# load the store, keep only the products whose quantity is at or below the threshold,
+# and sort them by quantity (most urgent first) and then by ID.
+# Return the sorted list of low-stock products.
 def cmd_low_stock(args):
     """Custom feature: products whose quantity is at or below a threshold.
 
@@ -281,9 +296,10 @@ def cmd_low_stock(args):
 
 
 # ---------------------------------------------------------------------------
-# Argument parsing
+# Argument parsing: defines what commands and options the program accepts.
 # ---------------------------------------------------------------------------
 
+# build_parser() defines what commands and options the program accepts.
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="products.py",
@@ -348,6 +364,7 @@ def build_parser():
     return parser, update
 
 
+# Main function: parse the command line, run the command, and print the result as JSON.
 def main(argv=None):
     parser, update_parser = build_parser()
     args = parser.parse_args(argv)  # exits with code 2 on syntax errors
