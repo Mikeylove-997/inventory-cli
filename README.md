@@ -119,3 +119,7 @@ python3 products.py --file shop.json low-stock --threshold -1   # error, exit co
 ```
 
 The file is UTF-8 JSON. If it is empty, malformed, or does not match this shape, the tool reports an error (exit code 1) and leaves the file unchanged. To save, the tool writes a temporary file in the same folder and then replaces the original with it, so an interrupted write cannot corrupt existing data.
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE).
