@@ -1,0 +1,9 @@
+products.json
+demo.json
+shop.json
+practice.json
+*.rtf
+*.txt
+__pycache__/
+.DS_Store
+HANDOUT.md
